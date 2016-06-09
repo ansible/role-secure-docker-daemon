@@ -79,5 +79,5 @@ MIT
 Authors
 -------
 
-[@chouseknecht](@chouseknecht)
+[@chouseknecht](https://github.com/chouseknecht)
 
