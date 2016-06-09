@@ -30,9 +30,15 @@
     path: "{{ dds_server_cert_path }}"
 
 - name: Copy server certs
-  copy:
-    src: "{{ dds_temp_path }}/{{ item }}"
-    dest: "{{ dds_server_cert_path }}"
+  command: cp "{{ dds_temp_path }}/{{ item }}" "{{ dds_server_cert_path }}/."
+  with_items:
+    - ca.pem
+    - server-cert.pem
+    - server-key.pem
+
+- name: Set file permissions 
+  file:
+    path: "{{ dds_server_cert_path }}/{{ item }}"
     mode: 0400
   with_items:
     - ca.pem
