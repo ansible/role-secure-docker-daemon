@@ -1,0 +1,13 @@
+---
+dds_system_tmp: /tmp
+dds_country: US
+dds_state: North Carolina
+dds_locality: Durham
+dds_organization: Acme Corp
+dds_host: 127.0.0.1
+dds_common_name: "{{ dds_host }}" 
+dds_passphrase: Phrase123!
+dds_server_cert_path: /etc/docker
+dds_client_cert_path: ~/.docker
+dds_env_shell_path: "~"  
+dds_install_shell: yes

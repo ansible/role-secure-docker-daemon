@@ -1,0 +1,40 @@
+# generate_client_certs.yml
+
+- name: Create client key
+  command: "openssl genrsa -out {{ dds_temp_path }}/key.pem 4096"
+
+- name: Create client CSR 
+  command: "openssl req -subj '/CN=client' -new -key {{ dds_temp_path}}/key.pem -out {{ dds_temp_path }}/client.csr"
+
+- name: Remove extfile
+  file:
+    state: absent
+    path: "{{ dds_extfile }}"
+
+- name: Create extfile
+  file:
+    state: touch
+    path: "{{ dds_extfile }}"
+
+- name: Add extendedKeyUsage to extfile
+  lineinfile:
+    dest: "{{ dds_extfile }}"
+    line: "extendedKeyUsage = clientAuth"
+
+- name: Create the client certificate 
+  command: "openssl x509 -req -days 365 -sha256 -in {{ dds_temp_path }}/client.csr -CA {{ dds_temp_path }}/ca.pem -CAkey {{ dds_temp_path }}/ca-key.pem -CAcreateserial -out {{ dds_temp_path }}/cert.pem -extfile {{ dds_extfile }} -passin file:{{ dds_passphrase_file }}"
+
+- name: Check that the client cert path exists
+  file:
+    state: directory
+    path: "{{ dds_client_cert_path }}"
+
+- name: Copy client certs
+  copy:
+    src: "{{ dds_temp_path }}/{{ item }}"
+    dest: "{{ dds_client_cert_path }}"
+    mode: 0400
+  with_items:
+    - ca.pem
+    - cert.pem
+    - key.pem
