@@ -1,14 +1,18 @@
 Secure Docker Daemon
 ====================
 
-Use to generate the key files and certificates needed to secure the Docker daemon.  
+Use to generate the key files and certificates needed to secure the Docker daemon. Certificates
+and keys are created on the target host, which will typically be the Docker daemon host.  If you
+plan on connecting to the Docker daemon from a remote host, add a play in your playbook that 
+uses the copy module to copy the client files to the remote host. 
 
 Requirements
 ------------
 
-The following packages should alredy be installed on the target host: 
+The following packages should already be installed on the target host: 
 
 - openssl 
+
 
 Role Variables
 --------------
@@ -48,18 +52,24 @@ dds_install_shell
 > If true, will install a shell script named *docker_env.sh* that sets DOCKER env variables. Source the shell script
 > in your .profile or .bashrc to set the variables automatically at login. Defaults to true.  
 
+dds_restart_docker
+> Set to true, if the docker daemon should be restarted after create the certificates. Defaults to true.
+
 Example Playbook
 ----------------
 
-The following playbook can be used to execute this role:
+Here's an example playbook that executes our role:
 
     - name: Secure the docker deameon
       hosts: localhost
       connection: local
       gather_facts: no
+      become: yes
       roles:
         - role: ansible.secure-docker-daemon
           dds_host: 10.0.2.15
+          dds_server_cert_path: /etc/default/docker
+          dds_restart_docker: no
 
 License
 -------

@@ -41,4 +41,9 @@
     dest: "{{ dds_env_shell_path }}/docker_env.sh"
     mode: 0755
   when: dds_install_shell
-    
+
+- name: Restart the docker daemon 
+  service:
+    name: docker
+    state: restarted  
+  when: dds_restart_docker
