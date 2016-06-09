@@ -60,7 +60,7 @@ Example Playbook
 
 Here's an example playbook that executes our role:
 
-    - name: Secure the docker deameon
+    - name: Secure the docker daemon
       hosts: localhost
       connection: local
       gather_facts: no
@@ -79,5 +79,5 @@ MIT
 Authors
 -------
 
-@chouseknecht
+[@chouseknecht](@chouseknecht)
 
