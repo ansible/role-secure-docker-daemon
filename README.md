@@ -52,7 +52,7 @@ dds_organization
 
 dds_host
 > The IP address used to access the Docker daemon. Defaults to
-> ansible_default_ipv4.address if available (i.e. gather_facts is not off),
+> ansible_docker0.ipv4.address if available (i.e. gather_facts is not off),
 > and 127.0.0.1 otherwise.
 
 dds_passphrase

@@ -3,7 +3,7 @@ dds_country: US
 dds_state: North Carolina
 dds_locality: Durham
 dds_organization: Acme Corp
-dds_host: "{{ ansible_default_ipv4.address|default('127.0.0.1') }}"
+dds_host: "{{ ansible_docker0.ipv4.address|default('127.0.0.1') }}"
 dds_common_name: "{{ dds_host }}" 
 dds_passphrase: Phrase123!
 dds_server_cert_path: /etc/docker
