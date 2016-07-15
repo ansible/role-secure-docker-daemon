@@ -1,46 +1,39 @@
 # generate_client_certs.yml
 
+- name: Install CA pem file
+  copy:
+    content: "{{ dds_ca_pem.stdout }}"
+    dest: "{{ dds_client_cert_path }}/ca.pem"
+
 - name: Create client key
-  command: "openssl genrsa -out {{ dds_temp_path }}/key.pem 4096"
+  command: "openssl genrsa -out {{ dds_client_cert_path }}/key.pem 4096"
 
-- name: Create client CSR 
-  command: "openssl req -subj '/CN=client' -new -key {{ dds_temp_path}}/key.pem -out {{ dds_temp_path }}/client.csr"
-
-- name: Remove extfile
-  file:
-    state: absent
-    path: "{{ dds_extfile }}"
+- name: Create client CSR
+  command: "openssl req -subj '/CN=client' -new -key {{ dds_client_cert_path }}/key.pem -out {{ dds_client_cert_path }}/client.csr"
 
 - name: Create extfile
-  file:
-    state: touch
-    path: "{{ dds_extfile }}"
+  copy:
+    content: "extendedKeyUsage = clientAuth"
+    dest: "{{ dds_client_cert_path }}/extfile.cnf"
 
-- name: Add extendedKeyUsage to extfile
-  lineinfile:
-    dest: "{{ dds_extfile }}"
-    line: "extendedKeyUsage = clientAuth"
+- name: Create the client certificate
+  command: "openssl x509 -req -days 365 -sha256 -in {{ dds_client_cert_path }}/client.csr -CA {{ dds_client_cert_path }}/ca.pem -CAkey {{ dds_client_cert_path }}/ca-key.pem -CAcreateserial -out {{ dds_client_cert_path }}/cert.pem -extfile {{ dds_client_cert_path }}/extfile.cnf -passin env:PASSKEY"
+  environment:
+    PASSKEY: "{{ dds_passphrase }}"
 
-- name: Create the client certificate 
-  command: "openssl x509 -req -days 365 -sha256 -in {{ dds_temp_path }}/client.csr -CA {{ dds_temp_path }}/ca.pem -CAkey {{ dds_temp_path }}/ca-key.pem -CAcreateserial -out {{ dds_temp_path }}/cert.pem -extfile {{ dds_extfile }} -passin file:{{ dds_passphrase_file }}"
-
-- name: Check that the client cert path exists
-  file:
-    state: directory
-    path: "{{ dds_client_cert_path }}"
-
-- name: Copy client certs
-  command: cp "{{ dds_temp_path }}/{{ item }}" "{{ dds_client_cert_path }}/."
-  with_items:
-    - ca.pem
-    - cert.pem
-    - key.pem
-
-- name: Set file permissions 
+- name: Set file permissions
   file:
     path: "{{ dds_client_cert_path }}/{{ item }}"
-    mode: 0444
+    mode: 0600
   with_items:
     - ca.pem
     - cert.pem
     - key.pem
+
+- name: Remove unneeded temp files
+  file:
+    state: absent
+    name: "{{ dds_client_cert_path }}/{{ item }}"
+  with_items:
+  - extfile.cnf
+  - client.csr

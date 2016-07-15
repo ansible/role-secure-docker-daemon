@@ -1,42 +1,27 @@
 # generate_server_certs.yml 
 
+- name: Install CA pem file
+  copy:
+    content: "{{ dds_ca_pem.stdout }}"
+    dest: "{{ dds_server_cert_path }}/ca.pem"
+
 - name: Create server key
-  command: openssl genrsa -out {{ dds_temp_path }}/server-key.pem 4096
+  command: openssl genrsa -out {{ dds_server_cert_path }}/server-key.pem 4096
 
-- name: Create the server CSR 
-  command: "openssl req -subj '/CN={{ dds_host }}' -sha256 -new -key {{ dds_temp_path }}/server-key.pem -out {{ dds_temp_path }}/server.csr"
-
-- name: Remove extfile
-  file:
-    state: absent
-    path: "{{ dds_extfile }}" 
+- name: Create the server CSR
+  command: "openssl req -subj '/CN={{ dds_host }}' -sha256 -new -key {{ dds_server_cert_path }}/server-key.pem -out {{ dds_server_cert_path }}/server.csr"
 
 - name: Create extfile
-  file:
-    state: touch 
-    path: "{{ dds_extfile }}" 
+  copy:
+    content: "subjectAltName = IP:{{ dds_host }}{{ ',IP:127.0.0.1' if dds_host != '127.0.0.1' }}"
+    dest: "{{ dds_server_cert_path }}/extfile.cnf"
 
-- name: Add alt name to extfile
-  lineinfile:
-    dest: "{{ dds_extfile }}" 
-    line: "subjectAltName = IP:{{ dds_host }},IP:127.0.0.1"
+- name: Create the server certificate
+  command: "openssl x509 -req -days 365 -sha256 -in {{ dds_server_cert_path }}/server.csr -CA {{ dds_client_cert_path }}/ca.pem -CAkey {{ dds_client_cert_path }}/ca-key.pem -CAcreateserial -out {{ dds_server_cert_path }}/server-cert.pem -extfile {{ dds_server_cert_path }}/extfile.cnf -passin env:PASSKEY"
+  environment:
+    PASSKEY: "{{ dds_passphrase }}"
 
-- name: Create the server certificate 
-  command: "openssl x509 -req -days 365 -sha256 -in {{ dds_temp_path }}/server.csr -CA {{ dds_temp_path }}/ca.pem -CAkey {{ dds_temp_path }}/ca-key.pem -CAcreateserial -out {{ dds_temp_path}}/server-cert.pem -extfile {{ dds_temp_path}}/extfile.cnf -passin file:{{ dds_passphrase_file }}"
-
-- name: Check that the server cert path exists
-  file:
-    state: directory
-    path: "{{ dds_server_cert_path }}"
-
-- name: Copy server certs
-  command: cp "{{ dds_temp_path }}/{{ item }}" "{{ dds_server_cert_path }}/."
-  with_items:
-    - ca.pem
-    - server-cert.pem
-    - server-key.pem
-
-- name: Set file permissions 
+- name: Set file permissions
   file:
     path: "{{ dds_server_cert_path }}/{{ item }}"
     mode: 0400
@@ -44,3 +29,16 @@
     - ca.pem
     - server-cert.pem
     - server-key.pem
+
+- name: Remove extfile and server.csr
+  file:
+    state: absent
+    path: "{{ dds_server_cert_path }}/{{ item }}"
+  with_items:
+  - server.csr
+  - extfile.cnf
+
+- name: Remove ca-key.pem
+  file:
+    path: "{{ dds_client_cert_path }}/ca-key.pem"
+    state: absent

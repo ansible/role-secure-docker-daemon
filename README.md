@@ -38,9 +38,6 @@ The following packages should already be installed on the target host:
 Role Variables
 --------------
 
-dds_system_tmp
-> Path to temporary file space. Defaults to '/tmp'.
-
 dds_country
 > Two character country abbreviation. Used in the server CSR. Defaults to 'US'. 
 
@@ -53,8 +50,10 @@ dds_locality
 dds_organization
 > Organization or company name. Used in the server CSR. Defaults to 'Acme Corp'.
 
-dds_host 
-> The host name or IP address used to access the Docker daemon. Defaults to '127.0.0.1'.
+dds_host
+> The IP address used to access the Docker daemon. Defaults to
+> ansible_default_ipv4.address if available (i.e. gather_facts is not off),
+> and 127.0.0.1 otherwise.
 
 dds_passphrase
 > A password used to secure key files. Defauts to 'Phrase123!'.
@@ -81,16 +80,20 @@ Example Playbook
 
 Here's an example playbook that executes our role:
 
-    - name: Secure the docker daemon
-      hosts: localhost
-      connection: local
-      gather_facts: no
-      become: yes
-      roles:
-        - role: ansible.secure-docker-daemon
-          dds_host: 10.0.2.15
-          dds_server_cert_path: /etc/default/docker
-          dds_restart_docker: no
+```
+- name: Secure the docker daemon
+  hosts: localhost
+  connection: local
+
+  roles:
+    - role: ansible.secure-docker-daemon
+      dds_host: 10.0.2.15
+      dds_server_cert_path: /etc/default/docker
+      dds_restart_docker: no
+```
+
+Because the role requires `become` for the server certs but user privileges for
+the client certs, you may need to provide the `-K/--ask-become-pass` argument
 
 License
 -------
