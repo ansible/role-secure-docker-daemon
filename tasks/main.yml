@@ -1,39 +1,28 @@
 ---
 # main.yml
-
-- name: Create a tempdir
+- name: Check that the cert directories exists
   file:
     state: directory
-    path: "{{ dds_temp_path }}"   
-
-- name: Remove passphrase file, if it exists
-  file:
-    state: absent
-    path: "{{ dds_passphrase_file }}" 
-
-- name: Create passphrase file
-  file:
-    state: touch
-    path: "{{ dds_passphrase_file }}" 
-
-- name: Add passphrase to the file
-  lineinfile:
-    dest: "{{ dds_passphrase_file }}"
-    line: "{{ dds_passphrase }}" 
+    path: "{{ item }}"
+  with_items:
+  - "{{ dds_client_cert_path }}"
+  - "{{ dds_server_cert_path }}"
 
 - name: Generate ca-key.pem
-  command: "openssl genrsa -aes256 -passout file:{{ dds_passphrase_file }} -out {{ dds_temp_path }}/ca-key.pem 4096"
+  command: "openssl genrsa -aes256 -passout env:PASSKEY -out {{ dds_client_cert_path }}/ca-key.pem 4096"
+  environment:
+    PASSKEY: "{{ dds_passphrase }}"
 
-- name: Generate ca certificate   
-  command: "openssl req -new -x509 -days 365 -key {{ dds_temp_path }}/ca-key.pem -sha256 -out {{ dds_temp_path }}/ca.pem -passin file:{{ dds_passphrase_file }} -subj '/C={{ dds_country }}/ST={{dds_state }}>/L={{ dds_locality }}/O={{ dds_organization }}/CN={{ dds_common_name }}'"
+- name: Generate ca certificate contents
+  command: "openssl req -new -x509 -days 365 -key {{ dds_client_cert_path }}/ca-key.pem -sha256  -passin env:PASSKEY -subj '/C={{ dds_country }}/ST={{ dds_state }}>/L={{ dds_locality }}/O={{ dds_organization }}/CN={{ dds_common_name }}'"
+  register: dds_ca_pem
+  environment:
+    PASSKEY: "{{ dds_passphrase }}"
+  no_log: True
 
-- include: generate_server_certs.yml
 - include: generate_client_certs.yml
-
-- name: Remove the temp directory
-  file:
-    state: absent
-    path: "{{ dds_temp_path }}"
+- include: generate_server_certs.yml
+  become: true
 
 - name: Install shell script for setting DOCKER env vars
   template:
@@ -42,8 +31,9 @@
     mode: 0755
   when: dds_install_shell
 
-- name: Restart the docker daemon 
+- name: Restart the docker daemon
   service:
     name: docker
-    state: restarted  
+    state: restarted
+  become: true
   when: dds_restart_docker

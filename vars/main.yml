@@ -1,5 +1,0 @@
----
-dds_temp_path: "{{ dds_system_tmp }}/ansible_dds"
-dds_passphrase_file: "{{ dds_temp_path }}/passphrase.txt"
-dds_csr_form_file: "{{ dds_temp_path }}/csr_form.txt"
-dds_extfile: "{{ dds_temp_path }}/extfile.cnf"

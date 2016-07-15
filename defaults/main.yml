@@ -1,14 +1,14 @@
 ---
-dds_system_tmp: /tmp
 dds_country: US
 dds_state: North Carolina
 dds_locality: Durham
 dds_organization: Acme Corp
-dds_host: 127.0.0.1
+dds_host: "{{ ansible_docker0.ipv4.address|default('127.0.0.1') }}"
 dds_common_name: "{{ dds_host }}" 
 dds_passphrase: Phrase123!
 dds_server_cert_path: /etc/docker
-dds_client_cert_path: ~/.docker
-dds_env_shell_path: "~"  
+dds_user_home_dir: "{{ lookup('env', 'HOME') }}"
+dds_env_shell_path: "{{ dds_user_home_dir }}"
+dds_client_cert_path: "{{ dds_user_home_dir }}/.docker"
 dds_install_shell: yes
-dds_restart_docker: no 
+dds_restart_docker: no
