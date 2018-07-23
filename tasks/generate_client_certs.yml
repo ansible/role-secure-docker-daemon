@@ -36,11 +36,17 @@
     - cert.pem
     - key.pem
 
-- name: Set file permissions 
+- name: Set file permissions for keys
+  file:
+    path: "{{ dds_client_cert_path }}/{{ item }}"
+    mode: 0400
+  with_items:
+    - key.pem
+
+- name: Set file permissions for certificates
   file:
     path: "{{ dds_client_cert_path }}/{{ item }}"
     mode: 0444
   with_items:
     - ca.pem
     - cert.pem
-    - key.pem
