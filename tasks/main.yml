@@ -27,8 +27,8 @@
 - name: Generate ca certificate   
   command: "openssl req -new -x509 -days 365 -key {{ dds_temp_path }}/ca-key.pem -sha256 -out {{ dds_temp_path }}/ca.pem -passin file:{{ dds_passphrase_file }} -subj '/C={{ dds_country }}/ST={{dds_state }}>/L={{ dds_locality }}/O={{ dds_organization }}/CN={{ dds_common_name }}'"
 
-- include: generate_server_certs.yml
-- include: generate_client_certs.yml
+- include_tasks: generate_server_certs.yml
+- include_tasks: generate_client_certs.yml
 
 - name: Remove the temp directory
   file:
